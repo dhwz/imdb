@@ -116,6 +116,32 @@ def search_title(title: str, locale: Optional[str] = None) -> Optional[SearchRes
 
 
 @lru_cache(maxsize=128)
+def search_ext(title: str, locale: Optional[str] = None, count: Optional[int] = 10, title_type: Optional[str] = '') -> Optional[SearchResult]:
+    """Search for a movie by title and return a list of titles."""
+    lang = _retrieve_url_lang(locale)
+    url = f"https://www.imdb.com/{lang}/search/title/?title={title}&title_type={title_type}&count={count}"
+    logger.info("Searching for title '%s'", title)
+    resp = niquests.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"}, cookies=locale_cookie(locale))
+    if resp.status_code != 200:
+        logger.warning("Search request failed: %s", resp.status_code)
+        return None
+    tree = html.fromstring(resp.content or b"")
+    script = tree.xpath('//script[@id="__NEXT_DATA__"]/text()')
+    if not script or type(script) is not list:  # throw if no script found
+        logger.error("No script found with id '__NEXT_DATA__'")
+        raise Exception("No script found with id '__NEXT_DATA__'")
+    # if script is not indexeable throw
+    if len(script) == 0:
+        logger.error("No script found with id '__NEXT_DATA__'")
+        raise Exception("No script found with id '__NEXT_DATA__'")
+    raw_json = json.loads(str(script[0]))
+
+    result = parse_json_search_ext(raw_json)
+    logger.debug("Search for '%s' returned %s titles", title, len(result.titles))
+    return result
+
+
+@lru_cache(maxsize=128)
 def get_name(person_id: str, locale: Optional[str] = None) -> Optional[PersonDetail]:
     """Fetch person details from IMDb using the provided IMDb ID.
     Preserve the 'nm' prefix or not, it will be stripped in the function.
