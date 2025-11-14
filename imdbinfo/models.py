@@ -336,6 +336,8 @@ class MovieBriefInfo(SeriesMixin, BaseModel):
     )
     kind: Optional[str] = None  # e.g. 'movie', 'tvSeries', 'tvSeriesEpisode' ...
     rating: Optional[float] = None  # e.g. 8.7
+    votes: Optional[int] = None
+    plot: Optional[str] = None
 
     @classmethod
     def from_movie_search(cls, data: dict):
@@ -350,6 +352,8 @@ class MovieBriefInfo(SeriesMixin, BaseModel):
             year=data.get('releaseYear',None),
             kind=data.get("titleType", {}).get('id', None),
             rating=data.get("ratingSummary", {}).get("aggregateRating", None),
+	    votes=data.get("voteCount", None),
+	    plot=data.get("plot", ""),
         )
 
     @classmethod
