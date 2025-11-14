@@ -352,7 +352,7 @@ class MovieBriefInfo(SeriesMixin, BaseModel):
             year=data.get('releaseYear',None),
             kind=data.get("titleType", {}).get('id', None),
             rating=data.get("ratingSummary", {}).get("aggregateRating", None),
-	    votes=data.get("voteCount", None),
+	    votes=data.get("ratingSummary", {}).get("voteCount", None),
 	    plot=data.get("plot", ""),
         )
 
