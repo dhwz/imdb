@@ -38,6 +38,7 @@ from .models import (
 from .parsers import (
     parse_json_movie,
     parse_json_search,
+    parse_json_search_ext,
     parse_json_person_detail,
     parse_json_season_episodes,
     parse_json_bulked_episodes,
