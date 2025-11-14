@@ -512,6 +512,17 @@ def parse_json_search(raw_json) -> SearchResult:
     return res
 
 
+def parse_json_search_ext(raw_json) -> SearchResult:
+    logger.debug("Parsing search results JSON")
+    title = []
+    for title_data in pjmespatch("props.pageProps.searchResults.titleResults.titleListItems", raw_json):
+        title.append(MovieBriefInfo.from_movie_search(title_data))
+
+    res = SearchResult(titles=title)
+    logger.info("Parsed search results: %s titles", len(title))
+    return res
+
+
 def parse_json_person_detail(raw_json) -> PersonDetail:
     logger.debug("Parsing person detail JSON")
 
