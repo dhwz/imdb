@@ -172,7 +172,7 @@ def get_name(person_id: str, locale: Optional[str] = None) -> Optional[PersonDet
 
 @lru_cache(maxsize=128)
 def get_season_episodes(
-    imdb_id: str, season: Optional[int] = None, locale: Optional[str] = None, year: Optional[int] = None
+    imdb_id: str, season: Optional[str] = None, locale: Optional[str] = None, year: Optional[str] = None
 ) -> SeasonEpisodesList:
     """Fetch episodes for a movie or series using the provided IMDb ID."""
     imdb_id, lang = normalize_imdb_id(imdb_id, locale)
