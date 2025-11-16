@@ -172,11 +172,17 @@ def get_name(person_id: str, locale: Optional[str] = None) -> Optional[PersonDet
 
 @lru_cache(maxsize=128)
 def get_season_episodes(
-    imdb_id: str, season=1, locale: Optional[str] = None
+    imdb_id: str, season: Optional[int] = None, locale: Optional[str] = None, year: Optional[int] = None
 ) -> SeasonEpisodesList:
     """Fetch episodes for a movie or series using the provided IMDb ID."""
     imdb_id, lang = normalize_imdb_id(imdb_id, locale)
-    url = f"https://www.imdb.com/{lang}/title/tt{imdb_id}/episodes/?season={season}"
+    if year:
+        reqval = "year={year}"
+    elif season:
+        reqval = "season={season}"
+    else:
+        reqval = "season=1"
+    url = f"https://www.imdb.com/{lang}/title/tt{imdb_id}/episodes/?{reqval}"
     logger.info("Fetching episodes for movie %s", imdb_id)
     resp = niquests.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"}, cookies=locale_cookie(locale))
     if resp.status_code != 200:
