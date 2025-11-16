@@ -177,9 +177,9 @@ def get_season_episodes(
     """Fetch episodes for a movie or series using the provided IMDb ID."""
     imdb_id, lang = normalize_imdb_id(imdb_id, locale)
     if year:
-        reqval = "year={year}"
+        reqval = "year=" + year
     elif season:
-        reqval = "season={season}"
+        reqval = "season=" + season
     else:
         reqval = "season=1"
     url = f"https://www.imdb.com/{lang}/title/tt{imdb_id}/episodes/?{reqval}"
