@@ -758,7 +758,7 @@ def parse_json_extras(raw_json: dict) -> List[Any]:
         "goofs": goofs,
         "quotes": quotes
         }
-    return json.dumps(data)
+    return data
     
 
 def parse_json_reviews(raw_json: dict) -> List[Any]:
