@@ -44,6 +44,7 @@ from .parsers import (
     parse_json_bulked_episodes,
     parse_json_akas,
     parse_json_trivia,
+    parse_json_extras,
     parse_json_reviews,
     parse_json_filmography,
 )
@@ -282,6 +283,16 @@ def get_trivia(imdb_id: str) -> List[Dict]:
     return trivia_list
 
 
+def get_extras(imdb_id: str) -> List[Dict]:
+    imdb_id, _ = normalize_imdb_id(imdb_id)
+    raw_json = _get_extended_title_info(imdb_id)
+    if not raw_json:
+        logger.warning("No extras found for title %s", imdb_id)
+        return []
+    extras_list = parse_json_extras(raw_json)
+    return extras_list
+
+
 def get_reviews(imdb_id: str) -> List[Dict]:
     imdb_id, _ = normalize_imdb_id(imdb_id)
     raw_json = _get_extended_title_info(imdb_id)
@@ -317,7 +328,7 @@ def _get_extended_title_info(imdb_id) -> dict:
           interests(first:20){
             edges{node{primaryText{text}}}
        }
-        akas(first: 200) {
+        akas(first: 20) {
           edges {
             node {
               country { name: text code: id }
@@ -327,6 +338,38 @@ def _get_extended_title_info(imdb_id) -> dict:
           }
         }
          trivia(first: 50) {
+      edges {
+        node {
+          id
+          displayableArticle {
+            body {
+              plaidHtml
+            }
+          }
+          interestScore {
+            usersVoted
+            usersInterested
+          }
+        }
+      }
+    }
+         goofs(first: 50) {
+      edges {
+        node {
+          id
+          displayableArticle {
+            body {
+              plaidHtml
+            }
+          }
+          interestScore {
+            usersVoted
+            usersInterested
+          }
+        }
+      }
+    }
+         quotes(first: 50) {
       edges {
         node {
           id

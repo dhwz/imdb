@@ -21,6 +21,7 @@
 
 from typing import Optional, List, Dict, Union, Any
 import logging
+import json
 
 import jmespath
 
@@ -108,6 +109,13 @@ newCreditCategoryIdToOldCategoryIdObject = {
     "amzn1.imdb.concept.name_credit_category.c84ecaff-add5-4f2e-81db-102a41881fe3": "writer"
 }
 
+def getJsonValues(jsonData, jsonKey, default=None):
+    try:
+        for item in jsonKey:
+            jsonData = jsonData[item]
+        return jsonData
+    except (KeyError, TypeError, IndexError):
+        return default
 
 def pjmespatch(query, data, post_process=None, *args, **kwargs):
     result = jmespath.search(query, data)
@@ -716,6 +724,42 @@ def parse_json_trivia(raw_json: dict) -> List[Any]:
         trivia_list.append(trivia_item)
     return trivia_list
 
+
+def parse_json_extras(raw_json: dict) -> List[Any]:
+    trivia_edges = getJsonValues(raw_json, ['trivia', 'edges'])
+    goofs_edges = getJsonValues(raw_json, ['goofs', 'edges'], None)
+    quotes_edges = getJsonValues(raw_json, ['quotes', 'edges'], None)
+    trivia = []
+    goofs = []
+    quotes = []
+    for node in trivia_edges:
+        trivia_item = {
+            # "id": node.get("id"),
+            "body": node.get("node", {}).get("displayableArticle", {}).get("body", {}).get("plaidHtml"),
+            "interestScore": node.get("node", {}).get("interestScore", {}),
+        }
+        trivia.append(trivia_item)
+    for node in goofs_edges:
+        goofs_item = {
+            # "id": node.get("id"),
+            "body": node.get("node", {}).get("displayableArticle", {}).get("body", {}).get("plaidHtml"),
+            "interestScore": node.get("node", {}).get("interestScore", {}),
+        }
+        goofs.append(goofs_item)
+    for node in quotes_edges:
+        quotes_item = {
+            # "id": node.get("id"),
+            "body": node.get("node", {}).get("displayableArticle", {}).get("body", {}).get("plaidHtml"),
+            "interestScore": node.get("node", {}).get("interestScore", {}),
+        }
+        quotes.append(quotes_item)
+    data = {
+        "triva": trivia,
+        "goofs": goofs,
+        "quotes": quotes
+        }
+    return json.dumps(data)
+    
 
 def parse_json_reviews(raw_json: dict) -> List[Any]:
     reviews_edges = pjmespatch("reviews.edges[]", raw_json)
