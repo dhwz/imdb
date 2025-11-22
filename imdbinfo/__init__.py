@@ -32,6 +32,7 @@ from .services import (
     get_akas,
     get_reviews,
     get_trivia,
+    get_extras,
     get_filmography,
     get_all_interests,
 )
@@ -47,6 +48,7 @@ __all__ = [
     "get_akas",
     "get_reviews",
     "get_trivia",
+    "get_extras",
     "get_filmography",
     "get_all_interests",
 ]
