@@ -126,14 +126,12 @@ def pjmespatch(query, data, post_process=None, *args, **kwargs):
 
 
 def _parse_directors(result):
-    if result is None:
-        return []
     return [
-        Person.from_directors(a)
-        for a in result
-        if a.get("name") and a.get("name").get("id")
+        Person.from_directors(edge)
+        for group in result
+        if group.get("grouping", {}).get("text") in [ "Directors" , "Director" ]
+        for edge in group.get("credits", {}).get("edges", [])
     ]
-
 
 def _parse_creators(result):
     if result is None:
@@ -221,6 +219,16 @@ def _parse_jobs_v2(raw_jobs) -> List[str]:
         job_name = newCreditCategoryIdToOldCategoryIdObject.get(job, job)
         jobs.append(job_name)
     return jobs
+
+def _parse_principal_credits_v2_stars(principal_credits_groups) -> List[Person]:
+    if not principal_credits_groups:
+        return []
+    stars: List[Person] = []
+    for group in principal_credits_groups:
+        if group.get("grouping", {}).get("text") == "Stars":
+            for credit in group.get("credits", []):
+                stars.append(Person.from_cast(credit))
+    return stars
 
 def _parse_awards(awards_node) -> AwardInfo:
     if awards_node is None:
@@ -329,13 +337,13 @@ def parse_json_movie(raw_json) -> Optional[MovieDetail]:
         raw_json,
         _parse_mpaa,
     )
-    data["stars"] = pjmespatch(
-        "props.pageProps.aboveTheFoldData.castPageTitle.edges[]",
+    data["stars"] =pjmespatch(
+        "props.pageProps.mainColumnData.principalCreditsV2",
         raw_json,
-        lambda x: [Person.from_cast(a) for a in x],
+        _parse_principal_credits_v2_stars,
     )
     data["directors"] = pjmespatch(
-        "props.pageProps.mainColumnData.directorsPageTitle[0].credits[]",
+        "props.pageProps.mainColumnData.creditGroupings.edges[].node",
         raw_json,
         _parse_directors,
     )
