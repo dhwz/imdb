@@ -117,6 +117,12 @@ def getJsonValues(jsonData, jsonKey, default=None):
     except (KeyError, TypeError, IndexError):
         return default
 
+def flip_unique(d: Dict[Any, Any]) -> Dict[Any, Any]:
+    """Flip a dict when values are unique: value -> key."""
+    return {v: k for k, v in d.items()}
+
+OldCategoryIdToNewCategoryIdObject = flip_unique(newCreditCategoryIdToOldCategoryIdObject)
+
 def pjmespatch(query, data, post_process=None, *args, **kwargs):
     result = jmespath.search(query, data)
     #logger.debug("Query %s -> %s", query, result)
@@ -129,7 +135,7 @@ def _parse_directors(result):
     return [
         Person.from_directors(edge)
         for group in result
-        if group.get("grouping", {}).get("text") in [ "Directors" , "Director" ]
+        if group.get("grouping", {}).get("groupingId") in [ OldCategoryIdToNewCategoryIdObject["director"] ]
         for edge in group.get("credits", {}).get("edges", [])
     ]
 
