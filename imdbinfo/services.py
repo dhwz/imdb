@@ -372,7 +372,7 @@ def search_ext(title: str, locale: Optional[str] = None, count: Optional[int] = 
     raw_json = request_json_url(url)
     result = parse_json_search_ext(raw_json)
     logger.debug("Search for '%s' returned %s titles", title, len(result.titles))
-
+    return result
 
 @lru_cache(maxsize=128)
 def get_name(person_id: str, locale: Optional[str] = None) -> Optional[PersonDetail]:
