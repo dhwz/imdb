@@ -32,9 +32,17 @@ from .services import (
     get_akas,
     get_reviews,
     get_trivia,
-    get_extras,
+    get_parental_guide,
     get_filmography,
     get_all_interests,
+    TitleType,
+)
+from .exceptions import (
+    ImdbinfoError,
+    HTTPError,
+    WAFError,
+    GraphQLError,
+    ParseError,
 )
 
 __all__ = [
@@ -49,8 +57,16 @@ __all__ = [
     "get_reviews",
     "get_trivia",
     "get_extras",
+    "get_parental_guide",
     "get_filmography",
     "get_all_interests",
+    "TitleType",
+    # exceptions
+    "ImdbinfoError",
+    "HTTPError",
+    "WAFError",
+    "GraphQLError",
+    "ParseError",
 ]
 
 # setup library logging

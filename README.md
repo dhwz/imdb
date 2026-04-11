@@ -23,6 +23,7 @@
 - 📝 **User reviews and ratings** via `get_reviews`
 - 🎭 **Movie trivia and interesting facts** via `get_trivia`
 - 🗂️ **Full filmography** for actors, directors and writers via `get_filmography`
+- 🛡️ **Parental guide** including content advisories via `get_parental_guide`
 - 📝 **Typed Pydantic models** for predictable responses
 - ⚡ **Built-in caching** for faster repeated requests
 - ✅ **No API keys required**
@@ -180,6 +181,19 @@ for fact in trivia[:3]:
     print("---")
 ```
 
+#### Parental Guide
+Get parental guide information including content advisories, severity level, spoiler flags, and content descriptions:
+
+```python
+from imdbinfo import get_parental_guide
+
+pg = get_parental_guide("tt0133093")  # The Matrix
+for cat in pg.categories:
+    print(cat)  # e.g. NUDITY - MILD (6 descriptions)
+    for txt in cat.category_texts_list(spolier=True):
+        print(f" - {txt.text} (SPOILER: {txt.is_spoiler})")
+```
+
 ### Localized results in multiple languages (set globally or per request)
 
 Added support for locales in `search_movie`, `get_movie`, `get_episodes`, `get_all_episodes`, `get_name`
@@ -212,6 +226,23 @@ results = search_title("The Matrix", locale="it")
 for item in results.titles:
     # Print the localized title if available, otherwise the default title
     print(item.title, "->", getattr(item, "title_localized", item.title))
+```
+
+### Filtering results based on type (e.g. Movies, Series, Episodes etc.) 🔽 
+You can filter results from `search_title`, done server-side.
+```python
+from imdbinfo import search_title, TitleType
+
+# Search for single type: movies
+results = search_title("The Matrix", title_type=TitleType.Movies)
+for movie in results.titles:
+    print(f"{movie.title} ({movie.year}) - {movie.imdb_id}")
+
+# Search for multiple types: movies, shorts and videos.
+results = search_title("The Matrix", title_type=(TitleType.Movies, TitleType.Shorts, TitleType.Video))
+for movie in results.titles:
+    print(f"{movie.title} ({movie.year}) - {movie.imdb_id}")
+
 ```
 
 ### Get filmography with images 🎬🖼️

@@ -31,9 +31,9 @@
 - Refactor parsers.py to simplify data extraction and improve readability
 
 ## v0.3.2
-- Using jmespath to parse json response 
+- Using jmespath to parse json response
 - removing MovieDetail.cast now using MovieDetail.stars instead
-- MovieDetail.directors, kept for backward compatibility 
+- MovieDetail.directors, kept for backward compatibility
 - MovieDetail.categories['directors'] as List[Person] for directors with additional information
 - MovieDetail.categories['cast'] for characters as List[CastMember] adding information about characters image, url and Role
 - Some fixes in parsers and models to improve type hints and code clarity
@@ -83,7 +83,7 @@
 - Deprecate `get_episodes` function and add warning log for alternative usage
 - Update movie kind identifiers in usage_example.py and models.py for better clarity and consistency, now handling all: tvMovie, short, movie, tvEpisode, tvMiniseries, tvSpecial, tvShort, videoGame, video, musicVideo, podcastEpisode, podcastSeries
 
-## v0.4.4   
+## v0.4.4
 - add `get_akas(imdb_id: str) -> List[AkaInfo]` function to fetch alternate titles and AkaInfo model to represent them
 - add caching to services using `functools.lru_cache` for improved performance on repeated requests
 - add `SeasonEpisodesList.series_imdbId`and `SeasonEpisodesList.season_number` to identify the imdbId of the serie and the season number
@@ -91,7 +91,7 @@
 - add services to `__init__.py` for immediate access
 
 ## v0.5.0
-- add locale support to services: `search_movie`, `get_movie`, `get_episodes`, `get_all_episodes`, `get_name`, `get_akas` 
+- add locale support to services: `search_movie`, `get_movie`, `get_episodes`, `get_all_episodes`, `get_name`, `get_akas`
 
 ## v0.5.1
 - fix locale handling in services, errors in `'en'` when no locale provided
@@ -139,3 +139,63 @@
 ## v0.6.3
 - Enhance `MovieBriefInfo` model to include localized title and original title fields
 - Fix update User-Agent string in requests for improved compatibility
+
+## v0.6.4
+- Add TitleType filtering to `search_title` (support for Movies, Series, Episodes, Shorts, Video).
+- Introduce configurable User-Agent rotation (`USER_AGENTS_LIST`) and use random selection for requests.
+- Improve HTTP error handling: exceptions now include HTTP status and response text for easier debugging.
+- Add `rating` to `MovieBriefInfo` and include ratings in search results.
+- Introduce `request_json_url` and a GraphQL helper to centralize requests; expand GraphQL queries to include reviews, trivia and ratings for titles and richer filmography data.
+- Improve locale normalization and URL composition for localized requests.
+- Packaging and CI updates: add optional dependencies groups (`dev`, `build`, `test`) in `pyproject.toml`; add a CI workflow for branch `test` (`.github/workflows/push-test.yml`) mirroring publish/build steps.
+- Tests & examples: add unit tests covering user-agent, error messages and ratings; add example scripts and README updates demonstrating new features.
+- Dockerfile update: set `WORKDIR`, copy source into image and install development extras.
+
+## v0.6.5
+- Fix bug in stars parsing due to imdb data structure change
+
+## v0.6.6
+- Fix bug in directors parsing due to imdb data structure change
+
+## v0.6.7
+- Fix bug in directors parsing: handle locales in Directors Parsing, using objectId instead of Label name
+
+## v0.7.0
+- Deprecating python support for versions below 3.10. Not effective but will be in future releases, we will use features only available in 3.10+.
+
+## v0.7.1
+- Adding Parental Guide information to MovieDetail model. Check README.md for more details.
+- fix parsing on empty storyline_keywords summaries synopses sound_mixes printed_formats negative_formats laboratories colorations cameras aspect_ratios
+- improved directors parsing with CrewV2
+
+## v0.8.0
+- GraphQL-based search and richer search parsing:
+  - search_title now uses the IMDb GraphQL mainSearch endpoint and supports TitleType filtering.
+  - Search results include localized fields, primary images and ratings in the GraphQL shape.
+- Locale & headers:
+  - Added LOCALE_TO_COUNTRY_CODE and _get_country_code_from_locale and improved locale normalization; GraphQL requests set x-imdb-user-country header.
+- Transformers & utilities:
+  - Fixes for None handling in nested lists and other small transformer improvements.
+
+- Tests, examples & samples:
+  - Updated tests to reflect GraphQL-shaped responses and new behaviors.
+  - sample_search.json updated to GraphQL format used by tests.
+  - Formatting and minor fixes across example scripts.
+
+- Misc / Internal:
+  - Logging improvements and small refactors to parsing/service modules.
+  - Backwards-compatible fallbacks retained where possible.
+  
+## v0.8.1
+- Fix AWS WAF blocking
+
+## v0.8.2
+ - improving WAF cookie generation and re-usability to avoid blocks and improve performance. Now cookies are generated once per session and reused for subsequent requests, with automatic regeneration if a block is detected. This should significantly reduce the likelihood of encountering AWS WAF blocks while maintaining efficient request handling.
+ - Added logging for cookie generation and block detection to aid in debugging and monitoring of WAF interactions.
+ - Adding custom exception `WAFBlockException` to handle AWS WAF blocks more gracefully in the codebase. This allows for clearer error handling and potential retry logic in the future if desired.
+ - Adding cookies cache to store generated cookies for reuse across requests, improving performance and reducing the likelihood of encountering AWS WAF blocks
+ - Adding test cases to validate the new cookie generation and caching logic
+
+## v0.8.3
+  Fix bug in movie.year parsing
+  Fix bug person.knownfor parsing

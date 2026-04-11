@@ -22,42 +22,60 @@
 import logging
 
 logger = logging.getLogger(__name__)
+
 SUPPORTED_LOCALES = ("en", "fr-ca", "fr", "hi", "de", "it", "es", "pt", "es-es")
-DEFAULT_LOCALE = "en"  # fallback locale
+LOCALE_TO_COUNTRY_CODE = {
+    "en": "EN",
+    "fr-ca": "FR",
+    "fr": "FR",
+    "hi": "IN",
+    "de": "DE",
+    "it": "IT",
+    "es": "ES",
+    "pt": "PT",
+    "es-es": "ES",
+}
+DEFAULT_LOCALE = "en"
 _configured_locale = None
 
 
 def set_locale(locale: str):
-    """
-    Set the locale for fetching data from IMDb.
-    If the locale is not supported, it will fallback to DEFAULT_LOCALE.
-    """
     global _configured_locale
-    _configured_locale = locale
+    # accept only a single supported locale string
+    if not isinstance(locale, str):
+        logger.warning("Invalid locale type: %r. Locale must be a string. Falling back to default '%s'.", locale, DEFAULT_LOCALE)
+        _configured_locale = DEFAULT_LOCALE
+        return
+
+    l = locale.strip()
+    if l not in SUPPORTED_LOCALES:
+        logger.warning("Locale '%s' is not supported. Falling back to default '%s'.", l, DEFAULT_LOCALE)
+        _configured_locale = DEFAULT_LOCALE
+        return
+
+    _configured_locale = l
+
+
+def _normalize_locale(lcl: str):
+    if lcl not in SUPPORTED_LOCALES:
+        logger.warning("Locale '%s' is not supported. Using '%s'", lcl, DEFAULT_LOCALE)
+        return DEFAULT_LOCALE
+    return lcl
 
 
 def get_locale():
-    """
-    Get the currently configured locale.
-    """
     lcl = _configured_locale or DEFAULT_LOCALE
-    if lcl not in SUPPORTED_LOCALES:
-        logger.warning("Locale '%s' is not supported. Using '%s'", lcl, DEFAULT_LOCALE)
-        lcl = DEFAULT_LOCALE
-    if lcl == "en":
-        return "" # used to build the url and en is the default one the url doesn't contain it
-    return lcl
+    lcl = _normalize_locale(lcl)
+    return "" if lcl == DEFAULT_LOCALE else lcl
 
 
 def _retrieve_url_lang(locale=None):
-    """
-    Internal function to retrieve the locale for URL composition.
-    Priority: function argument > configured locale > default locale
-    """
     lcl = locale or _configured_locale or DEFAULT_LOCALE
-    if lcl not in SUPPORTED_LOCALES:
-        logger.warning("Locale '%s' is not supported. Using '%s'", lcl, DEFAULT_LOCALE)
-        lcl = DEFAULT_LOCALE
-    if lcl == "en":
-        return ""
-    return lcl
+    lcl = _normalize_locale(lcl)
+    return "" if lcl == DEFAULT_LOCALE else lcl
+
+
+def _get_country_code_from_lang_locale(locale=None):
+    lcl = locale or _configured_locale or DEFAULT_LOCALE
+    lcl = _normalize_locale(lcl)
+    return LOCALE_TO_COUNTRY_CODE.get(lcl, LOCALE_TO_COUNTRY_CODE[DEFAULT_LOCALE])

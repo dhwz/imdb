@@ -83,13 +83,22 @@ class Person(BaseModel):
 
     @classmethod
     def from_search(cls, data: dict):
+        professions = data.get("professions", [])
+        prof = ",".join(
+            [
+                p.get("profession", {}).get("text", "")
+                for p in professions
+                if p.get("profession", {}).get("text")
+            ]
+        )
+
         return cls(
-            name=data["nameText"],
-            imdb_id=data["nameId"].replace("nm", ""),
-            id=data["nameId"].replace("nm", ""),  # id without 'nm' prefix, e.g. '0000126'
-            imdbId=data["nameId"],
-            url=f"https://www.imdb.com/name/{data['nameId']}",
-            job=str((data.get("professions") or [""])[0]),
+            name=data["nameText"]["text"],
+            imdb_id=data["id"].replace("nm", ""),
+            id=data["id"].replace("nm", ""),  # id without 'nm' prefix, e.g. '0000126'
+            imdbId=data["id"],
+            url=f"https://www.imdb.com/name/{data['id']}",
+            job=prof,
         )
 
     @classmethod
@@ -127,9 +136,13 @@ class SeriesMixin:
 
 
 class InfoSeries(BaseModel):
-    display_years: List[str] = Field(default_factory=list)  # e.g. ['2013', '2014', '2015']
+    display_years: List[str] = Field(
+        default_factory=list
+    )  # e.g. ['2013', '2014', '2015']
     display_seasons: List[str] = Field(default_factory=list)  # e.g. ['1', '2', '3']
-    creators: List[Person] = Field(default_factory=list)  # eg. [Person(...), Person(...)]
+    creators: List[Person] = Field(
+        default_factory=list
+    )  # eg. [Person(...), Person(...)]
 
     @field_validator("display_years", mode="before")
     def filter_years(cls, value):
@@ -283,7 +296,9 @@ class MovieDetail(SeriesMixin, BaseModel):
     laboratories: List[str] = Field(default_factory=list)
     colorations: List[str] = Field(default_factory=list)
     cameras: List[str] = Field(default_factory=list)
-    aspect_ratios: List[Tuple[Optional[str], Optional[str]]] = Field(default_factory=list)
+    aspect_ratios: List[Tuple[Optional[str], Optional[str]]] = Field(
+        default_factory=list
+    )
     summaries: List[str] = Field(default_factory=list)
     synopses: List[str] = Field(default_factory=list)
     production: List[str] = Field(default_factory=list)
@@ -333,9 +348,7 @@ class MovieBriefInfo(SeriesMixin, BaseModel):
     title_localized: str
     cover_url: Optional[str] = None
     url: Optional[str] = None
-    year: Optional[int] = (
-        None  # TODO series will have year as string 'from-to'. For now only movies are supported
-    )
+    year: Optional[int] = None
     kind: Optional[str] = None  # e.g. 'movie', 'tvSeries', 'tvSeriesEpisode' ...
     rating: Optional[float] = None  # e.g. 8.7
     votes: Optional[int] = None
@@ -343,19 +356,29 @@ class MovieBriefInfo(SeriesMixin, BaseModel):
 
     @classmethod
     def from_movie_search(cls, data: dict):
+        # safely extract nested structures (preserve original behavior of returning None when missing)
+        release = data.get("releaseYear")
+        year = release.get("year") if isinstance(release, dict) else None
+
+        primary = data.get("primaryImage")
+        cover_url = primary.get("url") if isinstance(primary, dict) else None
+
+        imdb_full = data["id"]
+        imdb_num = str(imdb_full.replace("tt", ""))
+
         return cls(
-            imdbId=data["titleId"],
-            imdb_id=str(data["titleId"].replace("tt", "")),
-            id=str(data["titleId"].replace("tt", "")),
-            title_localized=data["titleText"],
-            title=data["originalTitleText"],
-            cover_url=data.get("primaryImage", {}).get("url", None),
-            url=f"https://www.imdb.com/title/{data['titleId']}/",
-            year=data.get('releaseYear',None),
-            kind=data.get("titleType", {}).get('id', None),
-            rating=data.get("ratingSummary", {}).get("aggregateRating", None),
-	    votes=data.get("ratingSummary", {}).get("voteCount", None),
-	    plot=data.get("plot", ""),
+            imdbId=imdb_full,
+            imdb_id=imdb_num,
+            id=imdb_num,
+            title_localized=data["titleText"]["text"],
+            title=data["originalTitleText"]["text"],
+            cover_url=cover_url,
+            url=f"https://www.imdb.com/title/{imdb_full}/",
+            year=year,
+            kind=data.get("titleType", {}).get("id"),
+            rating=data.get("ratingsSummary", {}).get("aggregateRating"),
+            votes=data.get("ratingSummary", {}).get("voteCount", None),
+            plot=data.get("plot", ""),
         )
 
     @classmethod
@@ -598,3 +621,88 @@ class AkasData(BaseModel):
             return self.imdbId
         else:
             raise KeyError(f"Key {item} not found in AkasDataModel")
+
+
+class ParentalGuideContentDescription(BaseModel):
+    is_spoiler: bool = False
+    text: str = ""
+
+    @classmethod
+    def from_node(cls, node: dict) -> "ParentalGuideContentDescription":
+        return cls(
+            is_spoiler=node.get("isSpoiler", False),
+            text=node.get("text", {}).get("plaidHtml", ""),
+        )
+
+
+class ParentalGuideCategory(BaseModel):
+    id: str = ""
+    text: str = ""
+    content_descriptions: List[ParentalGuideContentDescription] = Field(
+        default_factory=list
+    )
+    severity: str = "NONE"
+
+    @classmethod
+    def from_edge(cls, edge: dict) -> "ParentalGuideCategory":
+        cat = edge.get("category", {}) or {}
+        cat_contents = [
+            ParentalGuideContentDescription.from_node(item.get("node", {}) or {})
+            for item in edge.get("guideItems", {}).get("edges", []) or []
+        ]
+        votesfor = 0
+        severity = "NONE"
+        for tm in edge.get("severityBreakdown", []):
+            if tm.get("votedFor", 0) > votesfor:
+                votesfor = tm.get("votedFor", 0)
+                severity = tm.get("voteType", "NONE")
+
+        return cls(
+            id=cat.get("id", ""),
+            text=cat.get("text", ""),
+            content_descriptions=cat_contents,
+            severity=severity,
+        )
+
+    def has_category_texts(self) -> bool:
+        """Return True if there are any guide items in this category."""
+        return len(self.content_descriptions) > 0
+
+    def category_texts_list(self, spoiler=False) -> List[str]:
+        """Return a list of texts from the guide items."""
+        return [
+            item.text
+            for item in self.content_descriptions
+            if item.is_spoiler == spoiler
+        ]
+
+    def __repr__(self):
+        return f"{self.id} - {self.severity} ({len(self.content_descriptions)} descriptions)"
+
+    def __str__(self):
+        return self.__repr__()
+
+
+class ParentalGuideList(BaseModel):
+    categories: List[ParentalGuideCategory] = Field(default_factory=list)
+
+    @classmethod
+    def from_raw(cls, parental_guide: dict) -> Optional["ParentalGuideList"]:
+        if not parental_guide:
+            return None
+        categories = [
+            ParentalGuideCategory.from_edge(edge)
+            for edge in parental_guide.get("categories", []) or []
+        ]
+        return cls(categories=categories)
+
+    @property
+    def summary(self) -> dict[str, str]:
+        """Return the list of parental guide categories."""
+        return {category.id: category.severity for category in self.categories}
+
+    def __str__(self):
+        return f"{self.summary}"
+
+    def __repr__(self):
+        return self.__str__()

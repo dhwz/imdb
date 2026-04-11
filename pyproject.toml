@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "imdbinfo"
-version = "0.6.3"
+version = "0.8.3"
 description = "A Python service for querying IMDb data"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -17,10 +17,13 @@ dependencies = [
     "lxml",
     "pydantic",
     "jmespath",
-    "deprecated"
+    "deprecated",
+    "curl_cffi",
+    "cryptography"
 ]
 
-urls = {Homepage = "https://tveronesi.github.io/imdbinfo/"}
+
+urls = { Homepage = "https://tveronesi.github.io/imdbinfo/" }
 
 keywords = [
     "imdb",
@@ -33,14 +36,27 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+]
+[project.optional-dependencies]
 
+dev = [
+    "pytest>=7.0",
+    "mypy",
+    "ruff",
+    "black",
+]
+
+build = [
+    "build",
+    "twine",
+]
+
+test = [
+    "pytest>=7.0",
 ]
 
 [tool.setuptools]
